@@ -1,74 +1,169 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>AI Personal Assistant</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
+
     <h1 class="main-heading">AI Personal Assistant</h1>
 
     <div class="container">
 
+        <!-- ASK ANYTHING -->
+
         <h2>Ask Anything</h2>
+
         <form id="askForm">
-            <input type="text" name="question" placeholder="Ask anything..." required>
-            <button type="submit">Ask</button>
+
+            <input
+                type="text"
+                name="question"
+                placeholder="Ask anything..."
+                required
+            >
+
+            <button type="submit">
+                Ask
+            </button>
+
         </form>
-        <p id="ans-loading" style="display: none;">Processing...</p>
+
+        <p id="ans-loading" style="display: none;">
+            Processing...
+        </p>
+
         <p id="answer"></p>
+
 
         <hr>
 
+
+        <!-- EMAIL SUMMARIZER -->
+
         <h2>Summarize Email</h2>
+
         <form id="emailForm">
-            <textarea type="text" name="email" placeholder="Paste your email here.." required></textarea>
-            <button type="submit">Summarize</button>
+
+            <textarea
+                name="email"
+                placeholder="Paste your email here..."
+                required
+            ></textarea>
+
+            <button type="submit">
+                Summarize
+            </button>
+
         </form>
-        <p id="summary-loading" style="display: none;">Processing...</p>
+
+        <p id="summary-loading" style="display: none;">
+            Processing...
+        </p>
+
         <p id="summary"></p>
 
     </div>
 
-<script>
-    document.getElementById("askForm").onsubmit = async (e) => {
-        e.preventDefault();
-        let formData = new FormData(e.target);
 
-        let loading = document.getElementById("ans-loading");
-        loading.style.display = "block";   // show loader
+    <script>
 
-        let res = await fetch("/ask", {
-            method: "POST",
-            body: formData
-        });
+        
 
-        let data = await res.json();
-        document.getElementById("answer").innerText = data.response;
+        document.getElementById("askForm").onsubmit = async function(e) {
 
-        loading.style.display = "none";   // hide loader
-    };
+            e.preventDefault();
 
-document.getElementById("emailForm").onsubmit = async (e) => {
-    e.preventDefault();
-    let formData = new FormData(e.target);
+            const formData = new FormData(e.target);
 
-    let loading = document.getElementById("summary-loading");
-    loading.style.display = "block";
+            const loading = document.getElementById("ans-loading");
+            const answer = document.getElementById("answer");
 
-    let res = await fetch("/summarize", {
-        method: "POST",
-        body: formData
-    });
+            loading.style.display = "block";
+            answer.innerText = "";
 
-    let data = await res.json();
-    document.getElementById("summary").innerText = data.response;
+            try {
 
-    loading.style.display = "none";   // hide loader
-};
+                const res = await fetch("/ask", {
+                    method: "POST",
+                    body: formData
+                });
 
-</script>
+                const data = await res.json();
+
+                if (res.ok) {
+
+                    answer.innerText = data.response;
+
+                } else {
+
+                    answer.innerText =
+                        "Error: " + (data.error || "Something went wrong.");
+
+                }
+
+            } catch (error) {
+
+                answer.innerText =
+                    "Something went wrong: " + error.message;
+
+            }
+
+            loading.style.display = "none";
+        };
+
+
+        document.getElementById("emailForm").onsubmit = async function(e) {
+
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+
+            const loading = document.getElementById("summary-loading");
+            const summary = document.getElementById("summary");
+
+            loading.style.display = "block";
+            summary.innerText = "";
+
+            try {
+
+                const res = await fetch("/summarize", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+
+                    summary.innerText = data.response;
+
+                } else {
+
+                    summary.innerText =
+                        "Error: " + (data.error || "Something went wrong.");
+
+                }
+
+            } catch (error) {
+
+                summary.innerText =
+                    "Something went wrong: " + error.message;
+
+            }
+
+            loading.style.display = "none";
+        };
+
+    </script>
 
 </body>
+
 </html>
