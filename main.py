@@ -14,25 +14,44 @@ client = OpenAI(
     base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
 )
 
+
 @app.route("/")
 def hello_world():
     return render_template("index.html")
 
+
 @app.route("/ask", methods=["POST"])
 def ask():
-    question = request.form.get("question")
-    response = client.chat.completions.create(
-        model="gemini-3.6-flash",
-        messages=[
-            {"role": "system", "content": "Act like a helpful personal assistant"},
-            {"role": "user", "content": question}
-        ],
-        temperature=0.7,
-        max_tokens=512
-    )
+    try:
+        question = request.form.get("question")
 
-    answer = response.choices[0].message.content.strip()
-    return jsonify({"response": answer}), 200
+        if not question:
+            return jsonify({"error": "Please enter a question"}), 400
+
+        response = client.chat.completions.create(
+            model="gemini-3.6-flash",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Act like a helpful personal assistant"
+                },
+                {
+                    "role": "user",
+                    "content": question
+                }
+            ],
+            temperature=0.7,
+            max_tokens=512
+        )
+
+        answer = response.choices[0].message.content.strip()
+
+        return jsonify({"response": answer}), 200
+
+    except Exception as e:
+        print("ASK ERROR:", str(e))
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route("/summarize", methods=["POST"])
 def summarize():
@@ -43,11 +62,12 @@ def summarize():
             return jsonify({"error": "Please enter an email"}), 400
 
         prompt = f"""
-        Summarize the following email in 2-3 sentences.
-        
-        Email:
-        {email_text}
-        """
+Summarize the following email in 2-3 sentences.
+Keep the summary clear and concise.
+
+Email:
+{email_text}
+"""
 
         response = client.chat.completions.create(
             model="gemini-3.6-flash",
@@ -72,5 +92,7 @@ def summarize():
     except Exception as e:
         print("SUMMARIZE ERROR:", str(e))
         return jsonify({"error": str(e)}), 500
+
+
 if __name__ == "__main__":
     app.run(debug=True)
