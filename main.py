@@ -6,9 +6,13 @@ from openai import OpenAI
 app = Flask(__name__)
 
 load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
 
-client = OpenAI(api_key=api_key)
+api_key = os.getenv("GEMINI_API_KEY")
+
+client = OpenAI(
+    api_key=api_key,
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+)
 
 @app.route("/")
 def hello_world():
@@ -17,36 +21,34 @@ def hello_world():
 @app.route("/ask", methods=["POST"])
 def ask():
     question = request.form.get("question")
-        
-    response = client.responses.create(
-        model="gpt-5.4",
-        input=[
-                {"role": "system", "content": "Act like a helpful personal assistant"},
-                {"role": "user", "content": question}
-            ],
-            temperature=0.7,
-            max_output_tokens=512
+    response = client.chat.completions.create(
+        model="gemini-3.6-flash",
+        messages=[
+            {"role": "system", "content": "Act like a helpful personal assistant"},
+            {"role": "user", "content": question}
+        ],
+        temperature=0.7,
+        max_tokens=512
     )
-        
-    answer = response.output_text.strip()
+
+    answer = response.choices[0].message.content.strip()
     return jsonify({"response": answer}), 200
 
 @app.route("/summarize", methods=["POST"])
 def summarize():
     email_text = request.form.get("email")
     prompt = f"summarize the following email in 2-3 sentences: {email_text}"
-        
-    response = client.responses.create(
-        model="gpt-5.4",
-        input=[
-                {"role": "system", "content": "Act like an expert email assistant"},                
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3,
-            max_output_tokens=512
+    response = client.chat.completions.create(
+        model="gemini-3.6-flash",
+        messages=[
+            {"role": "system", "content": "Act like an expert email assistant"},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.3,
+        max_tokens=512
     )
-        
-    summary = response.output_text.strip()
+
+    summary = response.choices[0].message.content.strip()
     return jsonify({"response": summary}), 200
 
 if __name__ == "__main__":
