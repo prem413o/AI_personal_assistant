@@ -36,20 +36,41 @@ def ask():
 
 @app.route("/summarize", methods=["POST"])
 def summarize():
-    email_text = request.form.get("email")
-    prompt = f"summarize the following email in 2-3 sentences: {email_text}"
-    response = client.chat.completions.create(
-        model="gemini-3.6-flash",
-        messages=[
-            {"role": "system", "content": "Act like an expert email assistant"},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.3,
-        max_tokens=512
-    )
+    try:
+        email_text = request.form.get("email")
 
-    summary = response.choices[0].message.content.strip()
-    return jsonify({"response": summary}), 200
+        if not email_text:
+            return jsonify({"error": "Please enter an email"}), 400
 
+        prompt = f"""
+        Summarize the following email in 2-3 sentences.
+        
+        Email:
+        {email_text}
+        """
+
+        response = client.chat.completions.create(
+            model="gemini-3.6-flash",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are an expert email summarization assistant."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=0.3,
+            max_tokens=512
+        )
+
+        summary = response.choices[0].message.content.strip()
+
+        return jsonify({"response": summary}), 200
+
+    except Exception as e:
+        print("SUMMARIZE ERROR:", str(e))
+        return jsonify({"error": str(e)}), 500
 if __name__ == "__main__":
     app.run(debug=True)
